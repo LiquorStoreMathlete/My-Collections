@@ -440,6 +440,11 @@
   .quote-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
   .quote-row:hover .quote-actions { opacity: 1; }
 
+  /* Password modal */
+  .pw-prompt { font-size: 13px; color: var(--muted); margin-bottom: 16px; font-family: var(--mono); }
+  .lock-error { font-family: var(--mono); font-size: 11px; color: #c0392b; margin-top: 8px; text-align: center; min-height: 16px; }
+
+
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -449,24 +454,28 @@
     display: none;
     position: fixed;
     top: 0; left: 0; right: 0;
-    height: 52px;
+    height: 50px;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
     align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
+    justify-content: center;
     z-index: 20;
   }
 
   .mobile-title {
     font-family: var(--sans);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
-    color: var(--accent);
+    color: #ffffff;
     cursor: pointer;
+    text-align: center;
   }
 
   .hamburger {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
     background: none;
     border: none;
     cursor: pointer;
@@ -501,20 +510,25 @@
     .mobile-header { display: flex; }
 
     aside {
+      width: 33vw;
+      min-height: 0;
+      height: auto;
+      padding: 8px 0;
       transform: translateX(-100%);
       transition: transform 0.25s ease;
       z-index: 16;
-      top: 0;
-      padding-top: 20px;
+      top: 50px;
+      border-bottom: 1px solid var(--border);
     }
 
     aside.open { transform: translateX(0); }
+    .sidebar-title { display: none; }
 
     body { display: block; }
 
     .content {
       margin-left: 0;
-      padding: 72px 16px 24px;
+      padding: 66px 16px 24px;
       max-width: 100%;
     }
 
@@ -547,10 +561,10 @@
 
 <!-- Mobile header -->
 <div class="mobile-header">
-  <div class="mobile-title" onclick="showPage('home'); closeMobileMenu()">My Collections</div>
   <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
+  <div class="mobile-title" onclick="showPage('home'); closeMobileMenu()">My Collections</div>
 </div>
 
 <!-- Mobile drawer overlay -->
@@ -591,8 +605,25 @@
     <div class="quote-list" id="quote-list">
       <div class="empty-state" id="quote-empty">No quotes saved yet.</div>
     </div>
-  </div>
 
+
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="modal-overlay" id="modal-password">
+  <div class="modal">
+    <h3>Password Required</h3>
+    <p class="pw-prompt">Enter password to add content.</p>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="pw-input" placeholder="••••" maxlength="20" onkeydown="if(event.key==='Enter')tryUnlock()">
+    </div>
+    <div class="lock-error" id="lock-error"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-password')">Cancel</button>
+      <button class="btn btn-primary" onclick="tryUnlock()">Unlock</button>
+    </div>
+  </div>
 </div>
 
 <!-- ADD BOOK MODAL -->
@@ -639,10 +670,7 @@
   <div class="modal">
     <h3>Book Detail</h3>
     <div id="book-detail-content"></div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('modal-view-book')">Close</button>
-      <button class="btn btn-primary" onclick="deleteCurrentBook()">Delete</button>
-    </div>
+
   </div>
 </div>
 
@@ -667,6 +695,36 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+  // ── Password lock ─────────────────────────────────────────────────────
+  const PASSWORD = 'asdf';
+  let unlocked = sessionStorage.getItem('mc-unlocked') === '1';
+  let pendingAction = null;
+
+  function requirePassword(action) {
+    if (unlocked) { action(); return; }
+    pendingAction = action;
+    document.getElementById('pw-input').value = '';
+    document.getElementById('lock-error').textContent = '';
+    openModal('modal-password');
+    setTimeout(() => document.getElementById('pw-input').focus(), 100);
+  }
+
+  function tryUnlock() {
+    const val = document.getElementById('pw-input').value;
+    if (val === PASSWORD) {
+      unlocked = true;
+      sessionStorage.setItem('mc-unlocked', '1');
+      closeModal('modal-password');
+      document.getElementById('pw-input').value = '';
+      document.getElementById('lock-error').textContent = '';
+      if (pendingAction) { pendingAction(); pendingAction = null; }
+    } else {
+      document.getElementById('lock-error').textContent = 'Incorrect password.';
+      document.getElementById('pw-input').value = '';
+      document.getElementById('pw-input').focus();
+    }
+  }
+
   // ── Supabase ───────────────────────────────────────────────────────────
   const SUPABASE_URL = 'https://zumzjodsxaefbljajcwf.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1bXpqb2RzeGFlZmJsamFqY3dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODE3ODksImV4cCI6MjA4NzI1Nzc4OX0.DVhZNPMOcm1V1IJ_D_sT28iUShdjO3JPXl89_jEfV-g';
@@ -691,6 +749,7 @@
   function updateHomeCounts() {
     document.getElementById('home-book-count').textContent = books.length + (books.length === 1 ? ' entry' : ' entries');
     document.getElementById('home-quote-count').textContent = quotes.length + (quotes.length === 1 ? ' entry' : ' entries');
+
   }
 
   // ── Modals ─────────────────────────────────────────────────────────────
@@ -718,11 +777,13 @@
 
   // ── Books ──────────────────────────────────────────────────────────────
   function openAddBook() {
-    document.getElementById('input-title').value = '';
-    document.getElementById('input-author').value = '';
-    document.getElementById('input-year').value = new Date().getFullYear();
-    document.getElementById('input-notes').value = '';
-    openModal('modal-add-book');
+    requirePassword(() => {
+      document.getElementById('input-title').value = '';
+      document.getElementById('input-author').value = '';
+      document.getElementById('input-year').value = new Date().getFullYear();
+      document.getElementById('input-notes').value = '';
+      openModal('modal-add-book');
+    });
   }
 
   function submitBook() {
@@ -891,9 +952,11 @@
 
   // ── Quotes ─────────────────────────────────────────────────────────────
   function openAddQuote() {
-    document.getElementById('input-quote-text').value = '';
-    document.getElementById('input-quote-source').value = '';
-    openModal('modal-add-quote');
+    requirePassword(() => {
+      document.getElementById('input-quote-text').value = '';
+      document.getElementById('input-quote-source').value = '';
+      openModal('modal-add-quote');
+    });
   }
 
   async function submitQuote() {
@@ -942,6 +1005,7 @@
       list.appendChild(row);
     });
   }
+
 
   // ── Init: load from Supabase ───────────────────────────────────────────
   async function init() {
