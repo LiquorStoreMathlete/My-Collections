@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Collections</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --border: #2e2e2e;
+    --text: #d4d4d4;
+    --muted: #666;
+    --accent: #EAA220;
+    --accent-dim: #a06e10;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Rufina', Georgia, serif;
+    --sidebar-w: 200px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* Sidebar */
+  aside {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0;
+    position: fixed;
+    top: 0; left: 0;
+    background: var(--bg);
+    z-index: 10;
+  }
+
+  .sidebar-title {
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    padding: 0 24px 24px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity 0.15s;
+    user-select: none;
+  }
+
+  .sidebar-title:hover { opacity: 0.75; }
+
+  .nav-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    padding: 16px 24px 6px;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 12px;
+  }
+
+  .nav-item {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--muted);
+    padding: 7px 12px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+    border: none;
+    background: none;
+    text-align: left;
+    width: 100%;
+  }
+
+  .nav-item:hover { color: var(--text); background: var(--surface); }
+  .nav-item.active { color: var(--accent); background: var(--surface); }
+
+  /* Main content */
+  .content {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 40px;
+    max-width: 860px;
+  }
+
+  /* Pages */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Home page */
+  .home-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .home-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 40px;
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+  }
+
+  .home-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .home-card {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 20px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .home-card:hover {
+    border-color: var(--accent-dim);
+    background: var(--surface);
+  }
+
+  .home-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .home-card-count {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-header h2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+
+  /* Buttons */
+  .btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 2px;
+    letter-spacing: 0.04em;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-primary { border-color: var(--accent-dim); color: var(--accent); }
+  .btn-primary:hover { background: var(--accent); color: var(--bg); }
+  .btn-sm { padding: 3px 8px; font-size: 10px; }
+
+  /* Books list */
+  .book-list { display: flex; flex-direction: column; gap: 2px; }
+
+  .book-row {
+    display: grid;
+    grid-template-columns: 32px 44px 1fr 80px 60px auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid transparent;
+    border-radius: 2px;
+    transition: border-color 0.15s;
+    cursor: pointer;
+  }
+
+  .book-row:hover { border-color: var(--border); }
+
+  .book-rank {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    text-align: right;
+  }
+
+  .book-cover {
+    width: 36px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 1px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: block;
+  }
+
+  .book-cover-placeholder {
+    width: 36px;
+    height: 52px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .book-title { font-weight: 700; font-size: 13px; }
+  .book-author { font-size: 12px; color: var(--muted); }
+
+  .book-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .book-score {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent-dim);
+    text-align: right;
+  }
+
+  .book-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+  .book-row:hover .book-actions { opacity: 1; }
+
+  .empty-state {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    padding: 40px 0;
+    text-align: center;
+    border: 1px dashed var(--border);
+    border-radius: 2px;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    width: 560px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal h3 {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  .form-group { margin-bottom: 16px; }
+
+  .form-group label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus { border-color: var(--accent-dim); }
+
+  .form-group textarea { min-height: 90px; }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  /* Compare modal */
+  .compare-prompt {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    line-height: 1.7;
+  }
+
+  .compare-prompt strong { color: var(--text); }
+  .compare-options { display: flex; gap: 12px; }
+
+  .compare-card {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    text-align: center;
+  }
+
+  .compare-card:hover {
+    border-color: var(--accent);
+    background: rgba(234, 162, 32, 0.05);
+  }
+
+  .compare-card .card-rank {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .compare-card .card-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .compare-card .card-author { font-size: 11px; color: var(--muted); }
+
+  /* Book detail */
+  .book-detail-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .book-detail-author {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .book-detail-notes {
+    font-size: 13px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    border-left: 2px solid var(--border);
+    padding-left: 16px;
+  }
+
+  .book-detail-meta {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .meta-item { font-family: var(--mono); font-size: 11px; }
+  .meta-item span { color: var(--muted); }
+
+  /* Quotes */
+  .quote-list { display: flex; flex-direction: column; gap: 2px; }
+
+  .quote-row {
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid transparent;
+    border-radius: 2px;
+    transition: border-color 0.15s;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .quote-row:hover { border-color: var(--border); }
+  .quote-text { font-size: 13px; line-height: 1.7; font-style: italic; }
+
+  .quote-source {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-style: normal;
+  }
+
+  .quote-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+  .quote-row:hover .quote-actions { opacity: 1; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside>
+  <div class="sidebar-title" onclick="showPage('home')">My Collections</div>
+  <div class="sidebar-nav">
+    <button class="nav-item" id="nav-books" onclick="showPage('books')">Books</button>
+    <button class="nav-item" id="nav-quotes" onclick="showPage('quotes')">Quotes</button>
+  </div>
+</aside>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- HOME -->
+  <div class="page active" id="page-home"></div>
+
+  <!-- BOOKS -->
+  <div class="page" id="page-books">
+    <div class="section-header">
+      <h2>Books — <span id="book-count">0</span> entries</h2>
+      <button class="btn btn-primary" onclick="openAddBook()">+ Add Book</button>
+    </div>
+    <div class="book-list" id="book-list">
+      <div class="empty-state" id="book-empty">No books logged yet. Add your first entry.</div>
+    </div>
+  </div>
+
+  <!-- QUOTES -->
+  <div class="page" id="page-quotes">
+    <div class="section-header">
+      <h2>Quotes — <span id="quote-count">0</span> entries</h2>
+      <button class="btn btn-primary" onclick="openAddQuote()">+ Add Quote</button>
+    </div>
+    <div class="quote-list" id="quote-list">
+      <div class="empty-state" id="quote-empty">No quotes saved yet.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ADD BOOK MODAL -->
+<div class="modal-overlay" id="modal-add-book">
+  <div class="modal">
+    <h3>New Book Entry</h3>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="input-title" placeholder="Book title">
+    </div>
+    <div class="form-group">
+      <label>Author</label>
+      <input type="text" id="input-author" placeholder="Author name">
+    </div>
+    <div class="form-group">
+      <label>Year Read</label>
+      <input type="text" id="input-year" placeholder="2024">
+    </div>
+    <div class="form-group">
+      <label>Summary / Analysis</label>
+      <textarea id="input-notes" placeholder="Your thoughts, analysis, takeaways..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-add-book')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitBook()">Save & Rank</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARE MODAL -->
+<div class="modal-overlay" id="modal-compare">
+  <div class="modal">
+    <h3>Head-to-Head Comparison</h3>
+    <p class="compare-prompt">You just added <strong id="compare-new-title"></strong>. Which do you prefer?</p>
+    <div class="compare-options" id="compare-options"></div>
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="btn" onclick="skipCompare()">Skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW BOOK MODAL -->
+<div class="modal-overlay" id="modal-view-book">
+  <div class="modal">
+    <h3>Book Detail</h3>
+    <div id="book-detail-content"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-view-book')">Close</button>
+      <button class="btn btn-primary" onclick="deleteCurrentBook()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD QUOTE MODAL -->
+<div class="modal-overlay" id="modal-add-quote">
+  <div class="modal">
+    <h3>New Quote</h3>
+    <div class="form-group">
+      <label>Quote</label>
+      <textarea id="input-quote-text" placeholder="The quote..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Source (Book, Author, etc.)</label>
+      <input type="text" id="input-quote-source" placeholder="e.g. Meditations — Marcus Aurelius">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-add-quote')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitQuote()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ── Supabase ───────────────────────────────────────────────────────────
+  const SUPABASE_URL = 'https://zumzjodsxaefbljajcwf.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1bXpqb2RzeGFlZmJsamFqY3dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODE3ODksImV4cCI6MjA4NzI1Nzc4OX0.DVhZNPMOcm1V1IJ_D_sT28iUShdjO3JPXl89_jEfV-g';
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ── State ──────────────────────────────────────────────────────────────
+  let books = [];
+  let quotes = [];
+  let newBookTemp = null;
+  let viewingBookId = null;
+
+  // ── Navigation ─────────────────────────────────────────────────────────
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    const navBtn = document.getElementById('nav-' + id);
+    if (navBtn) navBtn.classList.add('active');
+    updateHomeCounts();
+  }
+
+  function updateHomeCounts() {
+    document.getElementById('home-book-count').textContent = books.length + (books.length === 1 ? ' entry' : ' entries');
+    document.getElementById('home-quote-count').textContent = quotes.length + (quotes.length === 1 ? ' entry' : ' entries');
+  }
+
+  // ── Modals ─────────────────────────────────────────────────────────────
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+  });
+
+  // ── Cover fetch ────────────────────────────────────────────────────────
+  async function fetchCover(title, author) {
+    try {
+      const query = encodeURIComponent(`${title} ${author}`);
+      const res = await fetch(`https://openlibrary.org/search.json?q=${query}&limit=1&fields=cover_i`);
+      const data = await res.json();
+      if (data.docs && data.docs[0] && data.docs[0].cover_i) {
+        return `https://covers.openlibrary.org/b/id/${data.docs[0].cover_i}-M.jpg`;
+      }
+    } catch(e) {}
+    return null;
+  }
+
+  // ── Books ──────────────────────────────────────────────────────────────
+  function openAddBook() {
+    document.getElementById('input-title').value = '';
+    document.getElementById('input-author').value = '';
+    document.getElementById('input-year').value = new Date().getFullYear();
+    document.getElementById('input-notes').value = '';
+    openModal('modal-add-book');
+  }
+
+  function submitBook() {
+    const title = document.getElementById('input-title').value.trim();
+    const author = document.getElementById('input-author').value.trim();
+    const year = document.getElementById('input-year').value.trim();
+    const notes = document.getElementById('input-notes').value.trim();
+    if (!title) return alert('Please enter a title.');
+
+    newBookTemp = {
+      title, author, year, notes,
+      score: 1000, comparisons: 0,
+      date_added: new Date().toISOString().split('T')[0]
+    };
+
+    closeModal('modal-add-book');
+    if (books.length >= 1) startCompare(); else finalizeBook();
+  }
+
+  async function finalizeBook() {
+    newBookTemp.cover_url = await fetchCover(newBookTemp.title, newBookTemp.author);
+
+    const { data, error } = await db.from('books').insert([{
+      title: newBookTemp.title,
+      author: newBookTemp.author,
+      year: newBookTemp.year,
+      notes: newBookTemp.notes,
+      score: newBookTemp.score,
+      comparisons: newBookTemp.comparisons,
+      cover_url: newBookTemp.cover_url,
+      date_added: newBookTemp.date_added
+    }]).select().single();
+
+    if (error) { alert('Error saving book: ' + error.message); return; }
+
+    books.push(data);
+    renderBooks();
+    updateHomeCounts();
+    newBookTemp = null;
+  }
+
+  async function updateBookScores(winner, loser) {
+    await db.from('books').update({ score: winner.score, comparisons: winner.comparisons }).eq('id', winner.id);
+    await db.from('books').update({ score: loser.score, comparisons: loser.comparisons }).eq('id', loser.id);
+  }
+
+  async function deleteBook(id) {
+    const { error } = await db.from('books').delete().eq('id', id);
+    if (error) { alert('Error deleting book: ' + error.message); return; }
+    books = books.filter(b => b.id !== id);
+    renderBooks();
+    updateHomeCounts();
+  }
+
+  // ── Elo comparison ─────────────────────────────────────────────────────
+  function startCompare() {
+    const opponent = books[Math.floor(Math.random() * books.length)];
+    document.getElementById('compare-new-title').textContent = newBookTemp.title;
+    const container = document.getElementById('compare-options');
+    container.innerHTML = '';
+
+    [newBookTemp, opponent].forEach((book, i) => {
+      const card = document.createElement('div');
+      card.className = 'compare-card';
+      const rank = i === 0 ? '(New Entry)' : `Rank #${getRank(book.id)}`;
+      card.innerHTML = `
+        <div class="card-rank">${rank}</div>
+        <div class="card-title">${book.title}</div>
+        <div class="card-author">${book.author || '—'}</div>
+      `;
+      card.onclick = () => resolveCompare(i === 0 ? newBookTemp : opponent, i === 0 ? opponent : newBookTemp);
+      container.appendChild(card);
+    });
+
+    openModal('modal-compare');
+  }
+
+  async function resolveCompare(winner, loser) {
+    const K = 32;
+    const exp = 1 / (1 + Math.pow(10, (loser.score - winner.score) / 400));
+    winner.score = Math.round(winner.score + K * (1 - exp));
+    loser.score  = Math.round(loser.score  + K * (0 - (1 - exp)));
+    winner.comparisons = (winner.comparisons || 0) + 1;
+    loser.comparisons  = (loser.comparisons  || 0) + 1;
+
+    // If loser is already saved (has a real db id), update it now
+    if (loser.id) await updateBookScores(winner.id ? winner : null, loser);
+
+    closeModal('modal-compare');
+    await finalizeBook(); // saves winner (newBookTemp) and updates its score
+  }
+
+  async function skipCompare() {
+    closeModal('modal-compare');
+    await finalizeBook();
+  }
+
+  function getRank(id) {
+    const sorted = [...books].sort((a, b) => b.score - a.score);
+    const idx = sorted.findIndex(b => b.id === id);
+    return idx === -1 ? '?' : idx + 1;
+  }
+
+  // ── Render books ───────────────────────────────────────────────────────
+  function renderBooks() {
+    const list = document.getElementById('book-list');
+    document.getElementById('book-count').textContent = books.length;
+    if (books.length === 0) {
+      list.innerHTML = '';
+      list.appendChild(document.getElementById('book-empty'));
+      return;
+    }
+    const sorted = [...books].sort((a, b) => b.score - a.score);
+    list.innerHTML = '';
+    sorted.forEach((book, i) => {
+      const row = document.createElement('div');
+      row.className = 'book-row';
+      const coverHtml = book.cover_url
+        ? `<img class="book-cover" src="${book.cover_url}" alt="cover" onerror="this.outerHTML='<div class=\'book-cover-placeholder\'>NO COVER</div>'">`
+        : `<div class="book-cover-placeholder">NO COVER</div>`;
+      row.innerHTML = `
+        <div class="book-rank">#${i + 1}</div>
+        ${coverHtml}
+        <div>
+          <div class="book-title">${book.title}</div>
+          <div class="book-author">${book.author || '—'}</div>
+        </div>
+        <div class="book-meta">${book.year || '—'}<br>${book.date_added || ''}</div>
+        <div class="book-score">${book.score} pts</div>
+        <div class="book-actions">
+          <button class="btn btn-sm" onclick="event.stopPropagation(); viewBook(${book.id})">View</button>
+          <button class="btn btn-sm" onclick="event.stopPropagation(); deleteBook(${book.id})">✕</button>
+        </div>
+      `;
+      row.onclick = () => viewBook(book.id);
+      list.appendChild(row);
+    });
+  }
+
+  function viewBook(id) {
+    const book = books.find(b => b.id === id);
+    if (!book) return;
+    viewingBookId = id;
+    const rank = getRank(id);
+    const detailCover = book.cover_url
+      ? `<img src="${book.cover_url}" style="width:80px;height:116px;object-fit:cover;border-radius:2px;border:1px solid var(--border);margin-bottom:16px;display:block;" onerror="this.style.display='none'">`
+      : '';
+    document.getElementById('book-detail-content').innerHTML = `
+      ${detailCover}
+      <div class="book-detail-meta">
+        <div class="meta-item"><span>Rank</span><br>#${rank}</div>
+        <div class="meta-item"><span>Score</span><br>${book.score} pts</div>
+        <div class="meta-item"><span>Year</span><br>${book.year || '—'}</div>
+        <div class="meta-item"><span>Added</span><br>${book.date_added || ''}</div>
+      </div>
+      <div class="book-detail-title">${book.title}</div>
+      <div class="book-detail-author">${book.author || '—'}</div>
+      ${book.notes ? `<div class="book-detail-notes">${book.notes}</div>` : '<div style="color:var(--muted);font-size:12px;font-family:var(--mono);">No notes.</div>'}
+    `;
+    openModal('modal-view-book');
+  }
+
+  function deleteCurrentBook() {
+    if (confirm('Delete this book?')) { deleteBook(viewingBookId); closeModal('modal-view-book'); }
+  }
+
+  // ── Quotes ─────────────────────────────────────────────────────────────
+  function openAddQuote() {
+    document.getElementById('input-quote-text').value = '';
+    document.getElementById('input-quote-source').value = '';
+    openModal('modal-add-quote');
+  }
+
+  async function submitQuote() {
+    const text = document.getElementById('input-quote-text').value.trim();
+    const source = document.getElementById('input-quote-source').value.trim();
+    if (!text) return alert('Please enter the quote text.');
+
+    const { data, error } = await db.from('quotes').insert([{ text, source }]).select().single();
+    if (error) { alert('Error saving quote: ' + error.message); return; }
+
+    quotes.unshift(data);
+    renderQuotes();
+    updateHomeCounts();
+    closeModal('modal-add-quote');
+  }
+
+  async function deleteQuote(id) {
+    const { error } = await db.from('quotes').delete().eq('id', id);
+    if (error) { alert('Error deleting quote: ' + error.message); return; }
+    quotes = quotes.filter(q => q.id !== id);
+    renderQuotes();
+    updateHomeCounts();
+  }
+
+  function renderQuotes() {
+    const list = document.getElementById('quote-list');
+    document.getElementById('quote-count').textContent = quotes.length;
+    if (quotes.length === 0) {
+      list.innerHTML = '';
+      list.appendChild(document.getElementById('quote-empty'));
+      return;
+    }
+    list.innerHTML = '';
+    quotes.forEach(q => {
+      const row = document.createElement('div');
+      row.className = 'quote-row';
+      row.innerHTML = `
+        <div>
+          <div class="quote-text">"${q.text}"</div>
+          ${q.source ? `<div class="quote-source">— ${q.source}</div>` : ''}
+        </div>
+        <div class="quote-actions">
+          <button class="btn btn-sm" onclick="deleteQuote(${q.id})">✕</button>
+        </div>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  // ── Init: load from Supabase ───────────────────────────────────────────
+  async function init() {
+    const [{ data: booksData }, { data: quotesData }] = await Promise.all([
+      db.from('books').select('*').order('score', { ascending: false }),
+      db.from('quotes').select('*').order('created_at', { ascending: false })
+    ]);
+    books  = booksData  || [];
+    quotes = quotesData || [];
+    renderBooks();
+    renderQuotes();
+    updateHomeCounts();
+  }
+
+  init();
+</script>
+</body>
+</html>
